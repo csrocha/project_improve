@@ -1,8 +1,8 @@
 # Project Improve
 
-Tres campos genéricos sobre `project.task`, sin ningún motor de scheduling
-detrás — pensados para que otros addons los usen sin arrastrar
-[`insight_project`](https://github.com/csrocha/insight_project)
+Campos genéricos sobre `project.task`/`project.project`, sin ningún motor
+de scheduling detrás — pensados para que otros addons los usen sin
+arrastrar [`insight_project`](https://github.com/csrocha/insight_project)
 (TaskJuggler) como dependencia:
 
 - **`blocked`** (Boolean, con tracking): impedimento temporal que no
@@ -17,6 +17,26 @@ detrás — pensados para que otros addons los usen sin arrastrar
   evento significativo — pensado para disparar comunicaciones/actividades
   a usuarios o clientes ("etapa terminada", "documento listo") desde
   addons que todavía no existen, sin que necesiten TaskJuggler para nada.
+- **`required_skill_ids`** (Many2many `hr.skill`, en `project.task`):
+  skills necesarias para hacer la tarea, reutilizando el módulo estándar
+  `hr_skills` de Odoo.
+- **`resource_pool_ids`** (Many2many `res.users`, en `project.task`,
+  computado y editable): pool de candidatos a hacer la tarea. Sin
+  `required_skill_ids` cae a `user_ids`; con skills requeridas, se arma
+  con los empleados que las tengan **todas**, filtrado además por
+  `project.candidate_user_ids` si esa lista no está vacía. Al ser
+  `store=True, readonly=False`, se puede ajustar a mano — el ajuste
+  persiste hasta el próximo cambio de `required_skill_ids` o de
+  `candidate_user_ids`.
+- **`candidate_user_ids`** (Many2many `res.users`, en `project.project`):
+  roster de empleados considerados para la asignación automática de tareas
+  de ese proyecto. Vacío = considerar a todos los empleados de la
+  compañía.
+
+`insight_project` consume `resource_pool_ids` para armar el `allocate` que
+le manda a TaskJuggler (con `alternative`/`select`, para que TJ3 elija de
+verdad entre los candidatos), pero el pool en sí es staffing genérico —
+útil aunque no se use TaskJuggler.
 
 ## Consumidores conocidos
 
