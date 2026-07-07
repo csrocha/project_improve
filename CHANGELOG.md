@@ -9,6 +9,90 @@ para trazabilidad completa del razonamiento de agentes de IA.
 
 ---
 
+## [17.0.1.1.1] - 2026-07-07
+
+### Prompt
+
+> "En la vista de Form de Proyecto aparece todas las propiedades de
+> insight_project y project_improve. Deberíamos separar las cosas: Lo de
+> project_improve debería ir en Settings, y mejor si acomodamos con
+> temática en las secciones TASK MANAGEMENT y TIME MANAGEMENT."
+>
+> Sobre `candidate_user_ids`: "se merece su propia hoja. Esa hoja sería
+> 'Candidatos' o 'Recursos' o 'Equipo de asignado'."
+>
+> Sobre los skills de tarea: "Falta que aparezcan los skills requeridos
+> en la vista de tareas. Habría que agregarlos en una página dentro del
+> formulario. Los skills pertenecen a project_improve."
+
+### Discusión de diseño
+
+- `project_improve` no tenía ninguna vista propia (`'data': []` en el
+  manifest) — `candidate_user_ids` (Proyecto) y
+  `required_skill_ids`/`resource_pool_ids` (Tarea) los exponía
+  `insight_project`, mezclados con su configuración de TaskJuggler y, en
+  el caso de `candidate_user_ids`, escondidos detrás de
+  `invisible="not is_tj_enabled"` aunque `_compute_resource_pool_ids` los
+  use independientemente de si TaskJuggler está instalado o habilitado.
+- Se evaluó acomodarlos en Settings > Task Management / Time Management
+  del form nativo de `project.edit_project`, pero se descartó: son datos
+  de trabajo diario (a quién se puede asignar una tarea), no ajustes de
+  un toggle — mejor pestañas propias, separadas de `insight_project`.
+
+### Agregado
+
+- `views/project_project_views.xml`: pestaña "Equipo asignado" en el
+  form de Proyecto con `candidate_user_ids`, sin el gating de
+  `is_tj_enabled` que lo escondía antes.
+- `views/project_task_views.xml`: pestaña "Staffing" en el form de Tarea
+  con `required_skill_ids`/`resource_pool_ids`.
+
+---
+
+## [17.0.1.1.0] - 2026-07-07
+
+### Prompt
+
+> "Veo que algo hicimos mal en la importación y exportación de tjp,
+> específicamente en el tema milestone. Estamos agregando milestone en el
+> proyecto como tasks, pero son tasks? Por favor revisa una mejor
+> implementación de la que estamos teniendo ahora sin usar el
+> is_milestone, sino usando las características propias del addon
+> project."
+
+### Discusión de diseño
+
+- `is_milestone` era un boolean plano sin ningún modelo propio detrás.
+  Odoo ya trae `project.milestone` en el addon `project` community (no
+  hace falta Enterprise): un registro a nivel proyecto con `name`,
+  `deadline`, `is_reached`, `reached_date` y `task_ids` (inverso de
+  `project.task.milestone_id`), con vista, grupo de seguridad
+  (`group_project_milestone`) y tracking de chatter propios — exactamente
+  "las características propias del addon project" que pedía el prompt.
+- Se decidió mover el hito de "propiedad de una tarea" a "objeto de
+  proyecto enlazado a tareas" en vez de solo cambiar el nombre del campo,
+  porque TaskJuggler y Odoo entienden "milestone" de forma distinta: TJ3
+  lo trata como una tarea puntual de 0 esfuerzo; Odoo lo trata como un
+  hito al que *varias* tareas reales pueden apuntar. Mantener el hack de
+  "esta tarea real, edítenle is_milestone y pierde su effort/duration" no
+  se resuelve renombrando el campo — la lógica de export en
+  `insight_project` pasa a generar una tarea TJP sintética por cada
+  `project.milestone`, separada de las tareas reales (ver CHANGELOG de
+  `insight_project`).
+- Migración de datos en `migrations/17.0.1.1.0/pre-migrate.py`: por cada
+  tarea con `is_milestone=True`, crea un `project.milestone` (mismo
+  nombre) y la enlaza vía `milestone_id`, además de forzar
+  `allow_milestones=True` en los proyectos afectados. Corre en
+  pre-migrate porque necesita leer la columna antes de que el ORM la
+  dropee al detectar que el campo ya no existe en el modelo.
+
+### Quitado
+
+- `project.task.is_milestone` (Boolean). Ver `project.task.milestone_id`
+  (nativo de `project`) como reemplazo.
+
+---
+
 ## [17.0.1.0.1] - 2026-07-06
 
 ### Prompt

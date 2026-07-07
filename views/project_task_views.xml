@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="project_task_view_form_inherit_project_improve" model="ir.ui.view">
+        <field name="name">project.task.form.inherit.project_improve</field>
+        <field name="model">project.task</field>
+        <field name="inherit_id" ref="project.view_task_form2"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Staffing" name="staffing">
+                    <group>
+                        <field name="required_skill_ids" widget="many2many_tags"/>
+                        <field name="resource_pool_ids" widget="many2many_tags"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

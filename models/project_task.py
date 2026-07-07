@@ -34,13 +34,6 @@ class ProjectTask(models.Model):
              'motor de scheduling) está instalado, ese addon le agrega el '
              'compute correspondiente.',
     )
-    is_milestone = fields.Boolean(
-        string='Hito',
-        help='Tarea de duración cero que marca un evento significativo '
-             '(fin de etapa, documento listo, etc.), pensada para disparar '
-             'comunicaciones a usuarios o clientes.',
-    )
-
     @api.depends('required_skill_ids', 'project_id.candidate_user_ids')
     def _compute_resource_pool_ids(self):
         for task in self:
