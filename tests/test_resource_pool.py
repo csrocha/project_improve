@@ -6,10 +6,14 @@ back to its manual user_ids, a task with required skills only pools
 employees who have every one of them, and a project-level candidate roster
 (project.project.candidate_user_ids) further restricts that pool.
 """
+from odoo.exceptions import ValidationError
 from odoo.tests.common import TransactionCase
 
 
-class TestResourcePool(TransactionCase):
+class SkillPoolFixtures:
+    """Fixtures compartidas por TestResourcePool y TestTaskSkillGroup — sin
+    métodos test_*, para no re-ejecutar los tests de una clase dentro de la
+    otra por herencia."""
 
     @classmethod
     def setUpClass(cls):
@@ -54,6 +58,9 @@ class TestResourcePool(TransactionCase):
     def _task(self, **vals):
         vals.setdefault('project_id', self.project.id)
         return self.env['project.task'].create(vals)
+
+
+class TestResourcePool(SkillPoolFixtures, TransactionCase):
 
     def test_no_required_skills_falls_back_to_user_ids(self):
         task = self._task(name='No skills task', user_ids=[(6, 0, [self.user_none.id])])
@@ -105,3 +112,49 @@ class TestResourcePool(TransactionCase):
         task.required_skill_ids = [(6, 0, (self.skill_python | self.skill_go).ids)]
         self.assertEqual(task.resource_pool_ids, self.user_both,
                           'changing required_skill_ids must recompute the pool')
+
+
+class TestTaskSkillGroup(SkillPoolFixtures, TransactionCase):
+    """extra_skill_group_ids: puestos adicionales cubiertos EN SIMULTÁNEO con
+    el pool principal de la tarea, cada uno con su propio filtro de skills
+    (reusa los mismos fixtures de usuarios/skills que TestResourcePool)."""
+
+    def test_group_pool_matches_its_own_required_skills(self):
+        task = self._task(name='Con puesto adicional')
+        group = self.env['project.task.skill.group'].create({
+            'task_id': task.id,
+            'required_skill_ids': [(6, 0, self.skill_go.ids)],
+        })
+        self.assertEqual(group.resource_pool_ids, self.user_both)
+
+    def test_group_without_skills_raises(self):
+        task = self._task(name='Puesto sin skill')
+        with self.assertRaises(ValidationError):
+            self.env['project.task.skill.group'].create({
+                'task_id': task.id,
+                'required_skill_ids': [(6, 0, [])],
+            })
+
+    def test_group_restricted_by_project_candidates(self):
+        self.project.candidate_user_ids = [(6, 0, self.user_both.ids)]
+        task = self._task(name='Puesto restringido')
+        group = self.env['project.task.skill.group'].create({
+            'task_id': task.id,
+            'required_skill_ids': [(6, 0, self.skill_python.ids)],
+        })
+        self.assertEqual(group.resource_pool_ids, self.user_both)
+        self.project.candidate_user_ids = [(5, 0, 0)]
+
+    def test_multiple_groups_are_independent(self):
+        task = self._task(name='Dos puestos')
+        group_python = self.env['project.task.skill.group'].create({
+            'task_id': task.id,
+            'required_skill_ids': [(6, 0, self.skill_python.ids)],
+        })
+        group_go = self.env['project.task.skill.group'].create({
+            'task_id': task.id,
+            'required_skill_ids': [(6, 0, self.skill_go.ids)],
+        })
+        self.assertEqual(group_python.resource_pool_ids, self.user_both | self.user_python_only)
+        self.assertEqual(group_go.resource_pool_ids, self.user_both)
+        self.assertEqual(task.extra_skill_group_ids, group_python | group_go)

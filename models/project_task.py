@@ -20,6 +20,18 @@ class ProjectTask(models.Model):
              'proyecto, pero se puede ajustar a mano; el ajuste manual se '
              'preserva hasta el próximo recálculo.',
     )
+    extra_skill_group_ids = fields.One2many(
+        'project.task.skill.group', 'task_id',
+        string='Puestos adicionales (simultáneos)',
+        help='Puestos que deben cubrirse EN SIMULTÁNEO con el pool '
+             'principal de la tarea (resource_pool_ids/user_ids), cada uno '
+             'con su propio filtro de skills — pensado para trabajo '
+             'conjunto (ej. par de desarrollo, taller con 2 facilitadores), '
+             'no para roles fijos con nombre: el filtro de skills es lo '
+             'que define quién puede cubrir cada puesto. Si '
+             'insight_project está instalado, cada grupo se exporta como '
+             'un bloque `allocate` obligatorio adicional en TJ3.',
+    )
     blocked = fields.Boolean(
         string='Bloqueada', tracking=True,
         help='Impedimento temporal que impide continuar el trabajo. No '

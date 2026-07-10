@@ -9,6 +9,56 @@ para trazabilidad completa del razonamiento de agentes de IA.
 
 ---
 
+## [17.0.1.1.2] - 2026-07-10
+
+### Prompt
+
+> "Sigamos con el backlog de TJ3" → ítem "allocate con múltiples roles
+> obligatorios por tarea" → el usuario rechazó la idea de "roles" con
+> nombre fijo: "No quiero poner roles aquí, solo skills [...] Los roles
+> surgen a partir de las oportunidades. Es lo mismo que en el primer
+> partido de fútbol con tus amigos [...] deciden dónde va cada uno para
+> armar un equipo lo más completo posible." → sobre dónde vivir el
+> modelo: "En project_improve".
+
+### Discusión de diseño
+
+- El punto de partida fue un pedido de TJ3 (soportar `allocate` con
+  varios recursos obligatorios simultáneos por tarea, ver
+  `insight_project`), pero el usuario pivoteó el diseño: en vez de un
+  modelo de "roles" con nombre fijo (Dev/Reviewer), quiso generalizar el
+  mecanismo de skills que ya existía (`project.task.required_skill_ids`
+  → `resource_pool_ids` calculado) a "N puestos simultáneos", cada uno
+  con su propio filtro de skills — sin etiqueta de rol.
+- Por eso el modelo nuevo vive acá (`project_improve`), no en
+  `insight_project`: es donde ya está el mecanismo de matching por
+  skills, y este es su generalización natural (de 1 puesto por tarea a
+  N puestos simultáneos), no algo específico de TaskJuggler.
+  `insight_project` solo lo consume (lee `extra_skill_group_ids`) para
+  decidir cómo emitir el `allocate`.
+- `project.task.skill.group`: mismo patrón que el puesto principal de la
+  tarea (`required_skill_ids` Many2many + `resource_pool_ids` Many2many
+  computado/ajustable a mano), pero exige `required_skill_ids` no vacío
+  (constrains): si no hace falta filtrar por skill, no hace falta un
+  grupo aparte — el pool de la tarea ya cubre ese puesto.
+
+### Agregado
+
+- Modelo `project.task.skill.group` (`models/project_task_skill_group.py`):
+  `task_id`, `required_skill_ids`, `resource_pool_ids` (compute igual al
+  de `project.task`, scoped al grupo).
+- `project.task.extra_skill_group_ids` (One2many): puestos adicionales de
+  una tarea, cubiertos en simultáneo con su pool principal.
+- Vista: lista embebida en la pestaña "Staffing" del form de Tarea.
+- `security/ir.model.access.csv` (el módulo no tenía ninguno hasta ahora,
+  porque solo extendía modelos existentes).
+- Tests en `tests/test_resource_pool.py` (`TestTaskSkillGroup`): matching
+  por skill del grupo, constraint de skills vacías, restricción por
+  `candidate_user_ids` del proyecto, independencia entre grupos de la
+  misma tarea.
+
+---
+
 ## [17.0.1.1.1] - 2026-07-07
 
 ### Prompt
