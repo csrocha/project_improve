@@ -9,6 +9,43 @@ para trazabilidad completa del razonamiento de agentes de IA.
 
 ---
 
+## [17.0.1.1.4] - 2026-07-14
+
+### Prompt
+
+> "Acabo de ver en el setup de Project, veo que hay una opción para
+> activar 'Project Stages'. Eso de enterprise?" / "Corrige el
+> comentario. Podríamos poner nuestro estado en un Badge? Lo mismo que
+> se hace con la tarea y el stage y el state."
+
+### Discusión de diseño
+
+- Investigando la pregunta de si "Project Stages" (Settings > Project)
+  es Enterprise, se confirmó que es 100% Community — vive entero en
+  `odoo/addons/project` (`project.project.stage`, gateado por el grupo
+  `project.group_project_stages`). Pero la investigación reveló un error
+  real en el comentario de `state`: asumía que el único `stage_id` en
+  juego era el de `project.task` (Kanban de tareas). En realidad
+  `project.project` tiene su **propio** `stage_id` nativo, pensado
+  exactamente para lo mismo que resuelve este `state` ("Track the
+  progress of your projects"). Hoy no chocan visualmente porque ese
+  grupo suele estar desactivado, pero si alguien activa el setting
+  aparecería un segundo statusbar en el mismo form. Comentario corregido
+  para nombrar los tres mecanismos distintos que conviven en el mismo
+  modelo: `project.project.stage_id` (nativo, decorativo, sin lógica),
+  `project.task.stage_id`/`state` (Kanban y estado de tareas) y este
+  `project.project.state` (state machine real de scheduling de
+  portfolio).
+- El widget del header pasó de `statusbar` a `badge` con colores por
+  estado (info=borrador, warning=evaluación, primary=progreso,
+  success=finalizado) — mismo patrón que usa Odoo core para pintar
+  estados de negocio (`account.move`, `sale.order`), y el mismo tipo de
+  distinción visual que ya existe en `project.task` entre su
+  `stage_id` (statusbar) y su `state` (badge/dropdown de color). Los
+  botones de transición existentes no cambiaron.
+
+---
+
 ## [17.0.1.1.3] - 2026-07-14
 
 ### Prompt

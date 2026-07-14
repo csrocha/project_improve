@@ -16,7 +16,11 @@
                         invisible="state != 'progress'"/>
                 <button name="action_reevaluate" type="object" string="Reevaluar"
                         invisible="state != 'progress'"/>
-                <field name="state" widget="statusbar" statusbar_visible="draft,evaluation,progress,done"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'evaluation'"
+                       decoration-primary="state == 'progress'"
+                       decoration-success="state == 'done'"/>
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Equipo asignado" name="candidate_team">

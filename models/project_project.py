@@ -21,7 +21,9 @@ class ProjectProject(models.Model):
         string='Estado de planificación', default='draft', required=True,
         tracking=True,
         help='Ciclo de vida del proyecto para scheduling de portfolio '
-             '(distinto de stage_id/Kanban de tareas). "Borrador": el '
+             '(distinto de project.project.stage_id, el Kanban de etapas '
+             'nativo de Proyectos, y de project.task.stage_id/state, el '
+             'Kanban y el estado de tareas). "Borrador": el '
              'proyecto se planifica aislado, sin competir por recursos con '
              'otros proyectos. "En evaluación": se recalcula junto con los '
              'proyectos "En progreso" para medir el impacto real de '
