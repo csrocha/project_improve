@@ -5,9 +5,23 @@
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_evaluate" type="object" string="Evaluar" class="oe_highlight"
+                        invisible="state != 'draft'"/>
+                <button name="action_start" type="object" string="Iniciar" class="oe_highlight"
+                        invisible="state != 'evaluation'"/>
+                <button name="action_discard" type="object" string="Descartar"
+                        invisible="state != 'evaluation'"/>
+                <button name="action_finish" type="object" string="Finalizar" class="oe_highlight"
+                        invisible="state != 'progress'"/>
+                <button name="action_reevaluate" type="object" string="Reevaluar"
+                        invisible="state != 'progress'"/>
+                <field name="state" widget="statusbar" statusbar_visible="draft,evaluation,progress,done"/>
+            </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Equipo asignado" name="candidate_team">
                     <group>
+                        <field name="resource_priority"/>
                         <field name="candidate_user_ids" widget="many2many_tags"/>
                     </group>
                 </page>

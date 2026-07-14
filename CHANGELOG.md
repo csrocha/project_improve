@@ -9,6 +9,64 @@ para trazabilidad completa del razonamiento de agentes de IA.
 
 ---
 
+## [17.0.1.1.3] - 2026-07-14
+
+### Prompt
+
+> "Dentro del backlog hay una funcionalidad que quiero darle más
+> prioridad, que corresponde a los estados de los proyectos en draft,
+> evaluación y en progreso. Estamos listos para implementarla?" / "La
+> implementación de ORM debe ser contra project_improve, ahí debe estar
+> el campo estado y el orden de prioridad entre proyectos." / "Acomodemos
+> la UI. Es estado de planificación tiene que estar en el head del
+> formulario con un widget de estado. Hay que agregar los botones para
+> pasar de estado: Draft - [Evaluate] -> Evaluating / Evaluating -
+> [Start] -> On Process / Evaluating - [Discard] -> Draft / On Process -
+> [Finish] -> Finished / On Process - [Reavaluate] -> Evaluating."
+
+### Discusión de diseño
+
+- Los campos nuevos (`state`, `resource_priority`) van en `project_improve`
+  y no en `insight_project` porque este último ya depende de aquel
+  (confirmado contra el manifest) — mismo lugar que `candidate_user_ids`,
+  el único otro campo que este módulo agrega a `project.project`. El
+  motor de scheduling multi-proyecto que consume estos campos queda en
+  `insight_project` (ver su CHANGELOG).
+- `resource_priority`: el backlog dejaba abierto si debía ser Selection o
+  Integer — se decidió Integer libre (escala abierta para desempatar
+  entre muchos proyectos), aunque todavía no tiene consumidor (queda
+  pendiente en `insight_project/BACKLOG.md` ítem 5).
+- Se descartó agregar un botón "Reabrir" desde el estado Finalizado — el
+  usuario prefirió dejarlo como callejón terminal y en cambio abrir la
+  idea de "Clonar proyecto" con calibración histórica de esfuerzo (ver
+  memoria `project_clone_template_design` / `insight_project/BACKLOG.md`
+  ítem 8), sin implementar todavía.
+
+### Agregado
+
+- `project.project.state` (Selection: draft/evaluation/progress/done,
+  default draft, `tracking=True`) — ciclo de vida de planificación de
+  portfolio, distinto de `stage_id`/Kanban de tareas.
+- `project.project.resource_priority` (Integer, default 10) — campo
+  "tonto" sin cómputo propio, mismo espíritu que `is_critical_path`.
+- Botones de transición de estado (`action_evaluate`, `action_start`,
+  `action_discard`, `action_finish`, `action_reevaluate`) y widget
+  statusbar en el header del form de Proyecto.
+
+### Cambiado
+
+- `views/project_project_views.xml`: `resource_priority` se agregó a la
+  pestaña "Equipo asignado"; `state` se muestra como statusbar en el
+  header (no en una pestaña), junto a los botones de transición.
+
+### Validación
+
+- Suite completa de `insight_project` (que consume estos campos) en
+  verde tras el cambio: `make test-local MODULE=insight_project`,
+  199/199 tests, 0 fallos.
+
+---
+
 ## [17.0.1.1.2] - 2026-07-10
 
 ### Prompt

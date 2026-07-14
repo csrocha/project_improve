@@ -14,23 +14,19 @@ Propuesta de "nivel profesional superior" para todo el ecosistema
 `work_item_*`, `knowledge_asset`, `odoo_ai_core`). Visión completa en la
 memoria `project_ecosystem_roadmap`.
 
-### 1. Campo de prioridad/peso en `project.project`
+### ~~1. Campo de prioridad/peso en `project.project`~~ — RESUELTO
 
-Agregar `resource_priority` (Selection o Integer) en `project.project`,
-campo "tonto" igual que `is_critical_path` — no calcula nada por sí
-mismo, es solo el dato que otro módulo (`insight_project`) va a leer para
-desempatar conflictos de asignación entre proyectos (ver
-`insight_project/BACKLOG.md` ítem 5). Confirmado por auditoría de código
-(2026-07-13): hoy no existe ningún campo de prioridad a nivel
-`project.project` en este módulo ni en `insight_project` — solo existe
-`project.task.priority` (nativo de Odoo, binario Low/High), que es una
-cosa completamente distinta.
+Resuelto en v17.0.1.1.3 (2026-07-14): `resource_priority` (Integer,
+default 10) agregado como campo "tonto" sin cómputo propio. Ver
+CHANGELOG.md [17.0.1.1.3]. Pendiente: `insight_project` todavía no lo
+consume (ver su BACKLOG.md ítem 5).
 
-### 2. Exponer la prioridad en la UI de staffing
+### ~~2. Exponer la prioridad en la UI de staffing~~ — RESUELTO
 
-Una vez que exista el campo del ítem 1, agregarlo a la pestaña "Equipo
-asignado" de `project.project` para que se pueda fijar sin entrar a
-developer mode.
+Resuelto en v17.0.1.1.3 (2026-07-14): agregado a la pestaña "Equipo
+asignado". De paso se agregó también el campo `state` (ciclo de vida de
+portfolio scheduling) como statusbar en el header, con sus botones de
+transición — ver CHANGELOG.md [17.0.1.1.3].
 
 ### 3. Reporte de capacidad agregada por skill (portfolio)
 
