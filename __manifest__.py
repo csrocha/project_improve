@@ -2,7 +2,7 @@
 {
     'name': "Project Improve",
     'summary': "Campos genéricos de project.task (blocked, is_critical_path) sin motor de scheduling",
-    'version': '17.0.1.1.4',
+    'version': '17.0.1.1.5',
     'category': 'Project',
     'author': "Cristian S. Rocha <csrocha@gmail.com>",
     'website': "https://github.com/csrocha/project_improve",
@@ -13,6 +13,11 @@
         'views/project_project_views.xml',
         'views/project_task_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'project_improve/static/src/**/*',
+        ],
+    },
     'installable': True,
     'application': False,
 }

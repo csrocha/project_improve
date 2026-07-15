@@ -5,22 +5,21 @@
         <field name="model">project.project</field>
         <field name="inherit_id" ref="project.edit_project"/>
         <field name="arch" type="xml">
-            <xpath expr="//header" position="inside">
-                <button name="action_evaluate" type="object" string="Evaluar" class="oe_highlight"
-                        invisible="state != 'draft'"/>
-                <button name="action_start" type="object" string="Iniciar" class="oe_highlight"
-                        invisible="state != 'evaluation'"/>
-                <button name="action_discard" type="object" string="Descartar"
-                        invisible="state != 'evaluation'"/>
-                <button name="action_finish" type="object" string="Finalizar" class="oe_highlight"
-                        invisible="state != 'progress'"/>
-                <button name="action_reevaluate" type="object" string="Reevaluar"
-                        invisible="state != 'progress'"/>
-                <field name="state" widget="badge"
-                       decoration-info="state == 'draft'"
-                       decoration-warning="state == 'evaluation'"
-                       decoration-primary="state == 'progress'"
-                       decoration-success="state == 'done'"/>
+            <xpath expr="//div[hasclass('oe_title')]" position="attributes">
+                <attribute name="class" add="pe-0" separator=" "/>
+                <attribute name="style">max-width: initial;</attribute>
+            </xpath>
+            <xpath expr="//div[hasclass('oe_title')]/h1" position="replace">
+                <h1 class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex w-100">
+                        <field name="is_favorite" nolabel="1" widget="boolean_favorite" class="me-2"/>
+                        <field name="name" options="{'line_breaks': False}" widget="text" class="o_text_overflow" placeholder="e.g. Office Party"/>
+                    </div>
+                    <div class="d-flex justify-content-end o_state_container">
+                        <field name="state" widget="project_planning_state_selection"
+                               options="{'hide_label': False}"/>
+                    </div>
+                </h1>
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page string="Equipo asignado" name="candidate_team">

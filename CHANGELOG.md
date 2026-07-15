@@ -9,6 +9,87 @@ para trazabilidad completa del razonamiento de agentes de IA.
 
 ---
 
+## [17.0.1.1.5] - 2026-07-15
+
+### Prompt
+
+> "Ojo! El botón de importar siempre tiene que estar visible si está en
+> modo draft" / "No! Pero si tj esta habilitado no puedo reimportar el
+> TJP? Por favor, habilitalo incluso." / "Estoy viendo que en el
+> formulario de task el botón de state de las tareas se implementa con
+> un widget especial... Podríamos aproximarnos visualmente a lo que se ve
+> en task? [...] No hagas cosas raras en la vista, solo adapta." /
+> "¿Cómo preferís resolver el look del badge de estado?" → widget
+> genérico de Odoo, sin código nuevo / "no aparece el texto [...]
+> podemos usar los botones de ese estado para Evaluar, Borrador y en
+> Progreso?" → dropdown clickeable + sacar botones del header / "Veo que
+> para los tasks implementaron su propio widget [...] Debería hacer lo
+> mismo [...] para que se vean colores correctos?" → "Genera una versión
+> mínima y la probamos." / "En esta vista tenemos que lograr que se
+> rendee el html del título [...] El truco que quiero que aparezca sea
+> el max-width: initial".
+
+### Discusión de diseño
+
+- El estado de planificación (`state`) se movió del `badge` en el
+  header al título del formulario (arriba a la derecha, mismo lugar que
+  usa `project.task` para su propio estado) — mismo patrón `oe_title`/
+  `h1 d-flex justify-content-between` que usa el core.
+- Intento 1: `widget="badge"` con `decoration-*` por estado, en el
+  título. Intento 2: `widget="state_selection"` (genérico de Odoo,
+  dropdown clickeable + punto de color) — pero solo pinta 'done' de
+  verde (`colors = {blocked: red, done: green}` hardcodeado en el core),
+  y por un detalle de `extractProps` (`showLabel` es `false` por default
+  salvo que se pase `hide_label: False` explícito) el texto no se veía.
+- Intento final (el que queda): widget propio `project_planning_state_selection`
+  (`static/src/fields/project_planning_state_selection/`), subclase
+  mínima de `StateSelectionField` que solo sobreescribe `statusColor()`
+  devolviendo clases Bootstrap (`bg-info`/`bg-warning`/`bg-primary`/
+  `bg-success`, con `!important` propio de Bootstrap — no hace falta SCSS
+  nuevo). ~15 líneas, reusa 100% el dropdown/template del widget nativo.
+  Se probó primero como `project_state_selection`, pero ese nombre ya
+  existe en el core (`project/static/src/components/project_state_selection`,
+  usado para `last_update_status` — semáforo de salud del proyecto, nada
+  que ver con este `state`) y choca en el registry de fields
+  (`Cannot add 'project_state_selection': it already exists`); se
+  renombró a `project_planning_state_selection` para no pisarlo.
+- El widget quedó **clickeable** (sin `readonly`): los 5 botones de
+  header (`Evaluar`/`Iniciar`/`Descartar`/`Finalizar`/`Reevaluar`) se
+  sacaron de la vista porque `action_evaluate`/`action_start`/etc. solo
+  hacían `self.state = 'X'` sin ninguna validación adicional — clickear
+  una opción del dropdown tiene exactamente el mismo efecto. Se
+  mantienen los métodos Python (no se usan desde la UI, pero no se
+  referencian en ningún otro lado tampoco, así que no rompen nada por
+  quedar sin botón).
+- El contenedor `oe_title` quedaba "aplastado a la izquierda" — se
+  agregó `class="pe-0"` + `style="max-width: initial;"` al div vía
+  `position="attributes"` para que ocupe el ancho completo del form,
+  igual que en `project.task`.
+- El botón "Importar TJP..." (agregado esta sesión al header de
+  `insight_project`, ver su propio CHANGELOG) inicialmente quedaba
+  oculto si `is_tj_enabled` y el proyecto no estaba en `draft`; se pidió
+  que estuviera siempre visible en `draft` sin importar `is_tj_enabled`,
+  y luego que estuviera siempre visible sin condición — no hay guard
+  server-side en `action_open_import_wizard` que dependa de
+  `is_tj_enabled`, así que no hay riesgo funcional en dejarlo sin
+  `invisible`.
+
+### Cambiado
+
+- `views/project_project_views.xml`: estado movido del header al
+  título; header sin los 5 botones de workflow; `oe_title` con
+  `pe-0`/`max-width: initial`.
+- `static/src/fields/project_planning_state_selection/`: widget nuevo
+  (`__manifest__.py` con bloque `assets` → `web.assets_backend`, patrón
+  `static/src/**/*` igual que `work_item_systray`).
+
+### Validación
+
+- Pendiente `-u project_improve` + prueba manual en el navegador (no se
+  corrieron tests automáticos de este cambio, es puramente de vista/JS).
+
+---
+
 ## [17.0.1.1.4] - 2026-07-14
 
 ### Prompt
