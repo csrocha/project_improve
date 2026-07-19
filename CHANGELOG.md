@@ -9,6 +9,39 @@ para trazabilidad completa del razonamiento de agentes de IA.
 
 ---
 
+## [17.0.1.3.0] - 2026-07-19
+
+### Prompt
+
+> Épica 7 del roadmap de ecosistema: publicar el reporte de capacidad
+> como knowledge.asset y mostrarlo en el website vía
+> fop_odoo_project_report.
+
+### Agregado
+
+- Nueva dependencia `knowledge_asset` (única del módulo hasta ahora que
+  no fuera `project`/`hr_skills`).
+- `ProjectCapacityReportWizard.action_publish()`: publica el resultado
+  ya calculado (`line_ids`) como una versión nueva de un `knowledge.
+  asset` único por compañía (`category='project_improve.
+  capacity_report'`, `res_model='res.company'`) — a diferencia de
+  costo/desviación/riesgo (por proyecto/escenario), la capacidad es
+  portfolio-wide, sin un proyecto único al que anclarse. Botón
+  "Publicar como reporte" en el wizard, visible solo con resultado ya
+  calculado.
+- Bridge QWeb (`report/report_capacity_report_*.xml` +
+  `models/report_capacity_report.py`), mismo patrón que el de costo en
+  `insight_project`.
+
+### Discusión de diseño
+
+- `action_publish()` exige haber corrido "Calcular" antes (`UserError`
+  si `line_ids` está vacío) — evita publicar una versión vacía por
+  error.
+- Tests nuevos en `tests/test_capacity_report.py`: publicar sin calcular
+  falla, publicar crea el asset con el payload correcto, publicar dos
+  veces agrega una versión (no un asset nuevo).
+
 ## [17.0.1.2.0] - 2026-07-18
 
 ### Prompt

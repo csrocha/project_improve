@@ -8,6 +8,7 @@ pool de candidatos)."""
 from datetime import timedelta
 
 from odoo import fields
+from odoo.exceptions import UserError
 from odoo.tests.common import TransactionCase
 
 from .test_resource_pool import SkillPoolFixtures
@@ -158,3 +159,41 @@ class TestCapacityReport(SkillPoolFixtures, TransactionCase):
         )
         wizard.action_compute()
         self.assertEqual(len(wizard.line_ids), 2)
+
+    def test_publish_without_computing_raises(self):
+        wizard = self._wizard()
+        with self.assertRaises(UserError):
+            wizard.action_publish()
+
+    def test_action_publish_creates_knowledge_asset_version(self):
+        self._task(
+            name='Para publicar', allocated_hours=8.0,
+            date_deadline=fields.Datetime.now() + timedelta(days=2),
+            required_skill_ids=[(6, 0, self.skill_python.ids)],
+        )
+        wizard = self._wizard(horizon_weeks=2)
+        wizard.action_compute()
+        wizard.action_publish()
+
+        asset = self.env['knowledge.asset'].search([
+            ('res_model', '=', 'res.company'),
+            ('res_id', '=', self.env.company.id),
+            ('category', '=', 'project_improve.capacity_report'),
+        ])
+        self.assertEqual(len(asset), 1)
+        payload = asset.current_version_id.payload
+        self.assertEqual(payload['horizon_weeks'], 2)
+        self.assertEqual(len(payload['items']), 1)
+        self.assertEqual(payload['items'][0]['skill'], self.skill_python.name)
+
+        # Publicar de nuevo (otra corrida) agrega una versión, no un asset.
+        wizard2 = self._wizard(horizon_weeks=2)
+        wizard2.action_compute()
+        wizard2.action_publish()
+        assets = self.env['knowledge.asset'].search([
+            ('res_model', '=', 'res.company'),
+            ('res_id', '=', self.env.company.id),
+            ('category', '=', 'project_improve.capacity_report'),
+        ])
+        self.assertEqual(len(assets), 1)
+        self.assertEqual(len(assets.version_ids), 2)

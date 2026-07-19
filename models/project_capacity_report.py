@@ -2,12 +2,15 @@
 from collections import defaultdict
 from datetime import timedelta
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class ProjectCapacityReportWizard(models.TransientModel):
     _name = 'project.capacity.report.wizard'
     _description = 'Capacidad agregada por skill entre todos los proyectos en progreso'
+
+    _CAPACITY_REPORT_CATEGORY = 'project_improve.capacity_report'
 
     horizon_weeks = fields.Integer(
         default=4, required=True,
@@ -81,6 +84,59 @@ class ProjectCapacityReportWizard(models.TransientModel):
             'res_id': self.id,
             'view_mode': 'form',
             'target': 'new',
+        }
+
+    def _get_or_create_capacity_asset(self):
+        """A diferencia de costo/desviación/riesgo (por proyecto/escenario),
+        la capacidad es portfolio-wide — un único knowledge.asset por
+        compañía, versionado en cada publicación (mismo patrón "nueva
+        versión, no nuevo asset")."""
+        self.ensure_one()
+        company = self.env.company
+        Asset = self.env['knowledge.asset']
+        asset = Asset.search([
+            ('res_model', '=', 'res.company'),
+            ('res_id', '=', company.id),
+            ('category', '=', self._CAPACITY_REPORT_CATEGORY),
+        ], limit=1)
+        if asset:
+            return asset
+        manager_group = self.env.ref('project.group_project_manager', raise_if_not_found=False)
+        return Asset.create({
+            'name': _('Capacidad agregada por skill — %s') % company.name,
+            'res_model': 'res.company',
+            'res_id': company.id,
+            'category': self._CAPACITY_REPORT_CATEGORY,
+            'visibility': 'shared',
+            'shared_group_ids': [(6, 0, manager_group.ids)] if manager_group else False,
+        })
+
+    def action_publish(self):
+        self.ensure_one()
+        if not self.line_ids:
+            raise UserError(_('Calcule el reporte antes de publicarlo.'))
+        payload = {
+            'generated_at': fields.Datetime.to_string(fields.Datetime.now()),
+            'horizon_weeks': self.horizon_weeks,
+            'items': [{
+                'skill': line.skill_id.name,
+                'committed_hours': line.committed_hours,
+                'available_hours': line.available_hours,
+                'gap_hours': line.gap_hours,
+            } for line in self.line_ids],
+        }
+        asset = self._get_or_create_capacity_asset()
+        asset.create_version(
+            payload, schema='project_improve.capacity_report', schema_version='1.0',
+        )
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Reporte de capacidad publicado'),
+                'type': 'success',
+                'sticky': False,
+            },
         }
 
 

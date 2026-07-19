@@ -19,6 +19,9 @@
                 <footer>
                     <button string="Calcular" name="action_compute"
                             type="object" class="btn-primary"/>
+                    <button string="Publicar como reporte" name="action_publish"
+                            type="object" class="btn-secondary"
+                            invisible="not line_ids"/>
                     <button string="Cerrar" special="cancel" class="btn-secondary"/>
                 </footer>
             </form>
