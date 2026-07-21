@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_project_task_skill_group_user,project.task.skill.group user,model_project_task_skill_group,base.group_user,1,1,1,1
+access_project_capacity_report_wizard_manager,project.capacity.report.wizard manager,model_project_capacity_report_wizard,project.group_project_manager,1,1,1,1
+access_project_capacity_report_line_manager,project.capacity.report.line manager,model_project_capacity_report_line,project.group_project_manager,1,1,1,1

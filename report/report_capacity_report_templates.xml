@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_capacity_report_html" name="Reporte de capacidad (HTML)">
+        <html>
+            <head>
+                <meta charset="utf-8"/>
+                <title>Reportes de capacidad</title>
+                <style>
+                    body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 16px; background: #fafafa; }
+                    .o_capacity_report { max-width: 600px; margin-bottom: 32px; }
+                    .o_capacity_report h2 { font-size: 15px; margin: 0 0 4px 0; color: #212121; }
+                    .o_capacity_report .o_meta { font-size: 10px; color: #9e9e9e; margin-bottom: 12px; }
+                    .o_capacity_report table { width: 100%; border-collapse: collapse; font-size: 11px; }
+                    .o_capacity_report th { text-align: left; color: #757575; font-weight: normal; border-bottom: 1px solid #e0e0e0; padding: 4px 6px; }
+                    .o_capacity_report td { padding: 4px 6px; border-bottom: 1px solid #f0f0f0; }
+                    .o_capacity_report .o_num { text-align: right; }
+                    .o_capacity_report .o_good { color: #2e7d32; }
+                    .o_capacity_report .o_bad { color: #c62828; }
+                    .o_capacity_report .o_empty { font-size: 12px; color: #757575; }
+                </style>
+            </head>
+            <body>
+                <t t-foreach="reports" t-as="report">
+                    <div class="o_capacity_report">
+                        <h2>Capacidad agregada por skill</h2>
+                        <div class="o_meta">
+                            Horizonte: <t t-esc="report['horizon_weeks']"/> semana(s)
+                            — Generado: <t t-esc="report['generated_at']"/>
+                        </div>
+                        <t t-if="not report['rows']">
+                            <div class="o_empty">Sin datos.</div>
+                        </t>
+                        <table t-if="report['rows']">
+                            <thead>
+                                <tr>
+                                    <th>Skill</th>
+                                    <th class="o_num">Comprometido (h)</th>
+                                    <th class="o_num">Disponible (h)</th>
+                                    <th class="o_num">Brecha (h)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="report['rows']" t-as="row">
+                                    <tr>
+                                        <td t-esc="row['skill']"/>
+                                        <td class="o_num"><t t-esc="'%.1f' % row['committed_hours']"/></td>
+                                        <td class="o_num"><t t-esc="'%.1f' % row['available_hours']"/></td>
+                                        <td t-attf-class="o_num #{'o_bad' if row['gap_hours'] &lt; 0 else 'o_good'}">
+                                            <t t-esc="'%.1f' % row['gap_hours']"/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </t>
+            </body>
+        </html>
+    </template>
+</odoo>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_capacity_report_html" model="ir.actions.report">
+        <field name="name">Reporte de capacidad (HTML)</field>
+        <field name="model">knowledge.asset</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">project_improve.report_capacity_report_html</field>
+        <field name="asset_category">project_improve.capacity_report</field>
+    </record>
+</odoo>

@@ -28,7 +28,19 @@ asignado". De paso se agregó también el campo `state` (ciclo de vida de
 portfolio scheduling) como statusbar en el header, con sus botones de
 transición — ver CHANGELOG.md [17.0.1.1.3].
 
-### 3. Reporte de capacidad agregada por skill (portfolio)
+### ~~3. Reporte de capacidad agregada por skill (portfolio)~~ — RESUELTO
+
+Resuelto (2026-07-18): wizard `project.capacity.report.wizard` (Proyectos
+→ Reportes → "Capacidad agregada por skill"). Comprometido = `_compute_
+resource_pool_ids` como demanda declarada (`required_skill_ids`/
+`extra_skill_group_ids`), no asignación real post-TJ3. Disponible =
+`resource.calendar.get_work_hours_count` de cada candidato menos lo que
+ya tiene asignado (`task.user_ids`). Horizonte configurable en semanas;
+nivel de skill tratado binario (no ponderado por `level_progress`);
+publicación como `knowledge.asset` queda fuera de esta iteración (paso
+posterior, como ya aclaraba este ítem). Detalle completo en
+`CHANGELOG.md` [17.0.1.2.0]. 8 tests nuevos en `tests/
+test_capacity_report.py`, 18/18 OK.
 
 Hoy `_compute_resource_pool_ids` (`project_task.py`,
 `project_task_skill_group.py`) resuelve el pool de candidatos **por

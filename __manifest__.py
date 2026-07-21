@@ -2,16 +2,19 @@
 {
     'name': "Project Improve",
     'summary': "Campos genéricos de project.task (blocked, is_critical_path) sin motor de scheduling",
-    'version': '17.0.1.1.5',
+    'version': '17.0.1.3.0',
     'category': 'Project',
     'author': "Cristian S. Rocha <csrocha@gmail.com>",
     'website': "https://github.com/csrocha/project_improve",
     'license': 'OPL-1',
-    'depends': ['project', 'hr_skills'],
+    'depends': ['project', 'hr_skills', 'knowledge_asset'],
     'data': [
         'security/ir.model.access.csv',
         'views/project_project_views.xml',
         'views/project_task_views.xml',
+        'views/project_capacity_report_views.xml',
+        'report/report_capacity_report_templates.xml',
+        'report/report_capacity_report_actions.xml',
     ],
     'assets': {
         'web.assets_backend': [

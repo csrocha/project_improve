@@ -9,6 +9,100 @@ para trazabilidad completa del razonamiento de agentes de IA.
 
 ---
 
+## [17.0.1.3.0] - 2026-07-19
+
+### Prompt
+
+> Épica 7 del roadmap de ecosistema: publicar el reporte de capacidad
+> como knowledge.asset y mostrarlo en el website vía
+> fop_odoo_project_report.
+
+### Agregado
+
+- Nueva dependencia `knowledge_asset` (única del módulo hasta ahora que
+  no fuera `project`/`hr_skills`).
+- `ProjectCapacityReportWizard.action_publish()`: publica el resultado
+  ya calculado (`line_ids`) como una versión nueva de un `knowledge.
+  asset` único por compañía (`category='project_improve.
+  capacity_report'`, `res_model='res.company'`) — a diferencia de
+  costo/desviación/riesgo (por proyecto/escenario), la capacidad es
+  portfolio-wide, sin un proyecto único al que anclarse. Botón
+  "Publicar como reporte" en el wizard, visible solo con resultado ya
+  calculado.
+- Bridge QWeb (`report/report_capacity_report_*.xml` +
+  `models/report_capacity_report.py`), mismo patrón que el de costo en
+  `insight_project`.
+
+### Discusión de diseño
+
+- `action_publish()` exige haber corrido "Calcular" antes (`UserError`
+  si `line_ids` está vacío) — evita publicar una versión vacía por
+  error.
+- Tests nuevos en `tests/test_capacity_report.py`: publicar sin calcular
+  falla, publicar crea el asset con el payload correcto, publicar dos
+  veces agrega una versión (no un asset nuevo).
+
+## [17.0.1.2.0] - 2026-07-18
+
+### Prompt
+
+> "Ok, sigamos con la épica 3." — reporte de capacidad agregada por skill
+> (memoria `project_ecosystem_roadmap`, `BACKLOG.md` ítem 3).
+
+### Agregado
+
+- `project.capacity.report.wizard` + `project.capacity.report.line`
+  (`models/project_capacity_report.py`): wizard bajo Proyectos →
+  Reportes → "Capacidad agregada por skill". Recibe un horizonte en
+  semanas y calcula, por `hr.skill`, horas comprometidas vs. disponibles
+  entre TODOS los proyectos `state == 'progress'`.
+- **Comprometido**: `allocated_hours` de tareas hoja (`child_ids=False`,
+  no `1_done`/`1_canceled`) con `date_deadline` dentro del horizonte,
+  repartidas en partes iguales entre `required_skill_ids` (mismo
+  criterio que `insight_project._tj_cost_by_phase_and_skill`, ya
+  validado para costo). Los puestos adicionales
+  (`extra_skill_group_ids`) cuentan el total de `allocated_hours` sin
+  repartir con el puesto principal — son simultáneos, no alternativos
+  (mismo criterio que `_tjp_allocate` al exportar a TJ3).
+- **Disponible**: para cada empleado con esa skill
+  (`hr.employee.skill_ids`), horas de su `resource_calendar_id` en la
+  ventana (`resource.calendar.get_work_hours_count`, API nativa de
+  `resource`, nunca usada antes en este ecosistema) menos lo que ya
+  tiene asignado de verdad (`task.user_ids`, no el pool de candidatos)
+  en cualquier tarea abierta del horizonte, sin importar la skill.
+
+### Discusión de diseño
+
+- **Fuente de "comprometido": pool de candidatos, no asignación real
+  post-TJ3.** Decisión explícita del usuario — usa directamente
+  `required_skill_ids`/`extra_skill_group_ids` (demanda declarada), no
+  `insight.task.schedule.resource_ids`. Mantiene el reporte funcionando
+  en `project_improve` solo, sin depender de `insight_project` ni de que
+  haya corrido un schedule TJ3.
+- **Horizonte fijo configurable** (no snapshot sin ventana): sin una
+  ventana de tiempo, sumar horas de tareas a 1 semana vista junto con
+  tareas a 6 meses vista no es comparable contra ninguna disponibilidad
+  concreta. Un horizonte rodante de N semanas hace que "comprometido" y
+  "disponible" midan lo mismo.
+- **Nivel de skill (`hr.employee.skill.level_progress`) NO se usa —
+  binario.** Mismo criterio que ya usa `_compute_resource_pool_ids` hoy
+  (no distingue nivel); ponderar por nivel es un criterio nuevo que
+  ningún otro módulo de este ecosistema usa todavía — se deja para si
+  hace falta en la práctica.
+- **Publicación como `knowledge.asset` explícitamente fuera de
+  alcance** — el ítem de BACKLOG lo marca como paso posterior, no parte
+  de esta iteración.
+- Wizard `TransientModel` (no modelo persistente): no hace falta
+  histórico todavía, y evita el problema de qué hacer con corridas
+  viejas — cada `action_compute()` descarta `line_ids` previas y
+  recalcula.
+- Tests en `tests/test_capacity_report.py`, reusando los fixtures
+  `SkillPoolFixtures` de `test_resource_pool.py` (calendario
+  determinístico de 40h/semana vía `resource.calendar` propio, para que
+  una ventana rodante de 7 días dé siempre el mismo total sin importar
+  qué día es "hoy" al correr el test). 8 tests nuevos, 18/18 OK
+  (`make test-local MODULE=project_improve`).
+
 ## [17.0.1.1.5] - 2026-07-15
 
 ### Prompt
