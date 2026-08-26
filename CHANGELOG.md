@@ -9,6 +9,40 @@ para trazabilidad completa del razonamiento de agentes de IA.
 
 ---
 
+## [17.0.1.3.1] - 2026-08-26
+
+### Prompt
+
+> (mismo incidente de producción que insight_project v17.0.9.8.1) "En
+> proyecto participan más usuarios: Juan Manuel, Noel. No entiendo porque
+> no aparecen."
+
+### Corregido
+
+- `_compute_resource_pool_ids` no dependía de `user_ids`: cuando una tarea
+  no tiene `required_skill_ids`, el pool de candidatos se copiaba de
+  `user_ids` solo la primera vez que corría el compute (creación, o un
+  cambio posterior en `required_skill_ids`/`project_id.candidate_user_ids`).
+  Reasignar la tarea después (cambiar el "Asignado a") no disparaba un
+  recálculo -- `resource_pool_ids` quedaba pegado al asignado ORIGINAL, y
+  como TJ3 (`insight_project._tjp_allocate`) prioriza `resource_pool_ids`
+  sobre `user_ids`, terminaba programando a la persona equivocada sin
+  ningún error visible. Caso real: 2 tareas reasignadas a Juan Manuel
+  Gigena Gacic en producción seguían programándose para Cristian Rocha.
+- `user_ids` ahora es parte de los `@api.depends` de
+  `_compute_resource_pool_ids`.
+
+### Discusión de diseño
+
+- El ajuste manual del pool se sigue preservando igual que antes (test
+  `test_manual_override_persists_until_skills_change`): agregar `user_ids`
+  a los depends solo hace que reasignar la tarea cuente como un disparador
+  más de recálculo, al mismo nivel que cambiar `required_skill_ids`.
+- Este fix NO reescribe datos ya guardados: tareas reasignadas ANTES de
+  este cambio siguen con el pool viejo hasta que alguien vuelva a tocar su
+  `user_ids` (aunque sea al mismo valor).
+- Test nuevo `test_reassigning_user_ids_without_skills_updates_pool`.
+
 ## [17.0.1.3.0] - 2026-07-19
 
 ### Prompt

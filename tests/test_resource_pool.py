@@ -66,6 +66,20 @@ class TestResourcePool(SkillPoolFixtures, TransactionCase):
         task = self._task(name='No skills task', user_ids=[(6, 0, [self.user_none.id])])
         self.assertEqual(task.resource_pool_ids, self.user_none)
 
+    def test_reassigning_user_ids_without_skills_updates_pool(self):
+        """Bug real de producción (2026-08-26, proyecto 'Autodiagnóstico y
+        Sistema de Oportunidades ProPyMES'): resource_pool_ids no dependía
+        de user_ids, así que reasignar una tarea sin required_skill_ids
+        (cambiar el "Asignado a" de un usuario a otro) dejaba el pool de
+        candidatos de TJ3 pegado al asignado ORIGINAL -- TJ3 seguía
+        programando a quien ya no era responsable de la tarea, en vez de
+        a quien Odoo mostraba como asignado."""
+        task = self._task(name='Reasignada', user_ids=[(6, 0, [self.user_none.id])])
+        self.assertEqual(task.resource_pool_ids, self.user_none)
+
+        task.user_ids = [(6, 0, [self.user_both.id])]
+        self.assertEqual(task.resource_pool_ids, self.user_both)
+
     def test_pool_matches_employees_with_all_required_skills(self):
         task = self._task(
             name='Needs python+go',

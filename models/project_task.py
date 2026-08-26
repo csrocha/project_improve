@@ -16,9 +16,10 @@ class ProjectTask(models.Model):
         string='Pool de candidatos',
         compute='_compute_resource_pool_ids', store=True, readonly=False,
         help='Empleados candidatos a hacer esta tarea. Se recalcula cuando '
-             'cambian required_skill_ids o la lista de candidatos del '
-             'proyecto, pero se puede ajustar a mano; el ajuste manual se '
-             'preserva hasta el próximo recálculo.',
+             'cambian required_skill_ids, la lista de candidatos del '
+             'proyecto, o (sin skills requeridas) el propio "Asignado a", '
+             'pero se puede ajustar a mano; el ajuste manual se preserva '
+             'hasta el próximo recálculo.',
     )
     extra_skill_group_ids = fields.One2many(
         'project.task.skill.group', 'task_id',
@@ -46,7 +47,7 @@ class ProjectTask(models.Model):
              'motor de scheduling) está instalado, ese addon le agrega el '
              'compute correspondiente.',
     )
-    @api.depends('required_skill_ids', 'project_id.candidate_user_ids')
+    @api.depends('required_skill_ids', 'project_id.candidate_user_ids', 'user_ids')
     def _compute_resource_pool_ids(self):
         for task in self:
             if not task.required_skill_ids:
